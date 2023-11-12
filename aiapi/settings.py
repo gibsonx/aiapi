@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'bootstrap5',
+    'django_celery_results',
     'diagnosis',
 ]
 
@@ -127,3 +129,38 @@ MEDIA_URL = '/media/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# 指定 Broker 使用 Redis，Broker 负责任务的分发和调度
+CELERY_BROKER_URL = 'redis://192.168.191.128:6379/0'
+# 指定结果存储 Backend 使用 Redis，Backend 负责存储任务执行结果
+CELERY_RESULT_BACKEND = 'redis://192.168.191.128:6379/1'
+# # django-celery-results 设置
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_IMPORTS = ('aiapi.tasks', )
+# 时区,与django的TIMEZONE一致
+CELERY_TIMEZONE = "Asia/Shanghai"
+CELERY_TASK_TRACK_STARTED = True
+# # 有些情况防止死锁
+CELERYD_FORCE_EXECV = True
+# # 任务失败允许重试
+CELERY_ACKS_LATE = True
+# Worker并发数量，一般默认CPU核数，可以不设置
+CELERY_WORKER_CONCURRENCY = 1  # CELERYD_CONCURRENCY = 4
+# 每个worker最多执行的任务数，超过这个就将worker进行销毁，防止内存泄漏，默认无限
+CELERYD_MAX_TASKS_PER_CHILD = 10
+# # 单个任务运行的最大时间，超过这个时间，task就会被kill
+CELERY_TASK_TIME_LIMIT = 20 * 1
+# # 过期时间,默认一天
+CELERY_RESULT_EXPIRES = 20 * 1
+# 任务限流
+# CELERY_TASK_ANNOTATIONS = {'tasks.add': {'rate_limit': '10/s'}}
+# 定时任务
+# CELERYBEAT_SCHEDULE = {
+#     'task1': {
+#         'task': 'upload-task',  # 指定任务名称
+#         'schedule': timedelta(seconds=5),  # 任务执行时间，每5秒执行一次
+#         'options': {
+#             'queue': 'beat_tasks' # 指定队列
+#         }
+#     }
+# }

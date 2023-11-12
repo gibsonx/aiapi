@@ -10,6 +10,9 @@ from imgaug import augmenters as iaa
 import imgaug as ia
 from typing import List,Dict
 import numpy.typing as Numpy
+import os
+import datetime
+from utils.Predictor import Predictor
 
 class ImageProcesser:
 
@@ -23,19 +26,26 @@ class ImageProcesser:
         self.image_path = image_path
         self.image_name = self.image_path.split('\\')[-1]
         self.open_cv_image = np.array(Image.open(self.image_path))
+        self.model_name = model_args['model']
         self.model_path = model_args['model_path']
         self.img_height = model_args['img_height']
         self.img_width = model_args['img_width']
         ia.seed(1)
 
-    def kps_predict(self) :
+
+    def kps_predict(self):
         seq = iaa.Sequential([
             iaa.Resize({"height": self.img_height, "width": self.img_width})
         ])
         image_predict = seq(image=self.open_cv_image)
-        model = load_model(self.model_path)
-        kps_group = model.predict(np.stack([image_predict]))
-        kps_predict = kps_group.tolist()[0]
+
+        p = Predictor(self.model_path, image_predict)
+
+        if self.model_name == "densenet":
+            kps_predict = p.DenseNet
+        else:
+            kps_predict = p.Yolo8
+
         kps_predict_tuple = self.kpslist_to_tuple(kps_predict)
         imgoi_array, kpsoi = self.convert_to_original(image_predict, kps_predict_tuple)
 
@@ -48,16 +58,40 @@ class ImageProcesser:
         imgoi, kpsoi = seq(image=tran_img_array, keypoints=tran_kps)
         return imgoi, kpsoi
 
+    def create_image_folder(self,dest_father_dir):
+        # 创建存储路径
+        img_dir1 = os.path.join(settings.MEDIA_ROOT, dest_father_dir)
+        if not os.path.exists(img_dir1):
+            os.mkdir(img_dir1)
+        img_dir2 = os.path.join(img_dir1, datetime.datetime.now().strftime("%Y"))
+        if not os.path.exists(img_dir2):
+            os.mkdir(img_dir2)
+        img_dir3 = os.path.join(img_dir2, datetime.datetime.now().strftime("%m"))
+        if not os.path.exists(img_dir3):
+            os.mkdir(img_dir3)
+        target_dir = os.path.join(img_dir3, datetime.datetime.now().strftime("%d"))
+
+        if not os.path.exists(target_dir):
+            os.mkdir(target_dir)
+
+        target_dir_relative_path = os.path.relpath(target_dir, settings.MEDIA_ROOT)
+
+        return target_dir, target_dir_relative_path
+
     def save_tran_image(self) -> str:
         imgoi_array, kpsoi = self.kps_predict()
+        print(kpsoi)
         kps_original = KeypointsOnImage(kpsoi, shape=self.open_cv_image.shape)
-        image_with_kps = kps_original.draw_on_image(self.open_cv_image, size=5)
+        image_with_kps = kps_original.draw_on_image(self.open_cv_image, size=15)
 
-        target_folder = os.path.join(settings.MEDIA_ROOT, 'anno_images')
+        target_folder, target_folder_relative = self.create_image_folder(dest_father_dir='anno_images')
         target_image = os.path.join(target_folder, self.image_name)
 
+        #save image with absolute path
         plt.imsave(target_image, image_with_kps)
-        db_path = os.path.join('anno_images', self.image_name)
+
+        #return image relative path to save in DB
+        db_path = os.path.join(target_folder_relative, self.image_name)
 
         return db_path
 

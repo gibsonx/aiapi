@@ -6,16 +6,23 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic.edit import CreateView
 from .models import Diagnosis
 from django.contrib import messages
-from utils.utils import ImageProcesser
+from utils.Utils import ImageProcesser
 from django.views.generic import ListView
 from django.utils import timezone
 
 
 model_dict = {
-    "densenet121": {
+    "Pivles": {
+        "model": "densenet",
+        "img_height": 500,
         "img_width" : 280,
-        "img_height" : 500,
         "model_path" : "D:\/aspine\/densenet121.h5"
+    },
+    "SelfAssess": {
+        "model": "yolov8",
+        "img_height": 500,
+        "img_width" : 280,
+        "model_path": "D:\/aspine\/yolov8x-pose-p6.pt"
     }
 }
 
@@ -29,17 +36,25 @@ def DiagnosisView(request):
 
         if form.is_valid():
             img = form.cleaned_data.get("img")
-            type = form.cleaned_data.get("type")
+            diag_type = form.cleaned_data.get("type")
             obj = Diagnosis.objects.create(
                 img=img,
-                type=type
+                type=diag_type
             )
-            try:
-                annotated_image = ImageProcesser(image_path=obj.img.path, model_args=model_dict['densenet121'])
-                obj.anno_img = annotated_image.save_tran_image()
-                obj.save()
-            except Exception as e:
-                print(e)
+            print("current diag nose type is %s " % diag_type)
+            if diag_type == "1":
+                annotated_image = ImageProcesser(image_path=obj.img.path, model_args=model_dict['SelfAssess'])
+            elif diag_type == "2":
+                annotated_image = ImageProcesser(image_path=obj.img.path, model_args=model_dict['Pivles'])
+            anno_path = annotated_image.save_tran_image()
+
+            if anno_path:
+                try:
+
+                    obj.anno_img = annotated_image.save_tran_image()
+                    obj.save()
+                except Exception as e:
+                    print(e)
 
             messages.add_message(request, messages.INFO, "Job Id: {} 提交成功, 请去历史中等待查看".format(obj.id))
             return HttpResponseRedirect("/diag/")
