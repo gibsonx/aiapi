@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'bootstrap5',
-    'django_celery_results',
     'diagnosis',
 ]
 
@@ -135,8 +134,8 @@ CELERY_BROKER_URL = 'redis://192.168.191.128:6379/0'
 # 指定结果存储 Backend 使用 Redis，Backend 负责存储任务执行结果
 CELERY_RESULT_BACKEND = 'redis://192.168.191.128:6379/1'
 # # django-celery-results 设置
-CELERY_RESULT_BACKEND = 'django-db'
-CELERY_IMPORTS = ('aiapi.tasks', )
+# CELERY_RESULT_BACKEND = 'django-db'
+CELERY_IMPORTS = ('diagnosis.tasks', )
 # 时区,与django的TIMEZONE一致
 CELERY_TIMEZONE = "Asia/Shanghai"
 CELERY_TASK_TRACK_STARTED = True

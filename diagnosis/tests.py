@@ -1,5 +1,5 @@
 # Create your tests here.
-from aiapi import tasks
+from diagnosis import tasks
 import datetime
 import time
 # def send_email_to_level():
