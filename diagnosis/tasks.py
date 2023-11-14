@@ -11,5 +11,6 @@ from aiapi.celery_factory import app
 def send_email(level, content):
     print('去数据库根据等级查询用户:'+"_".join(level))
     print('发送的内容为：' + content)
+    time.sleep(20)
     print('发送邮箱结束')
     return "send_email success"
