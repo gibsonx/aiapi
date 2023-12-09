@@ -2,19 +2,22 @@ import boto3
 import logging
 logger = logging.getLogger('mylogger')
 from django.conf import settings
-
-class S3_upload():
-
+import os
+class S3:
     def __init__(self, bucket_name):
-        aws_access_key_id = settings.TENCENT_SECRET_ID
-        aws_secret_access_key = settings.TENCENT_SECRET_KEY
-        endpoint_url = settings.TENCENT_S3_ENDPOINT_URL
-        region = settings.TENCENT_S3_REGION # 区域
+        aws_access_key_id = settings.S3_SECRET_ID
+        aws_secret_access_key = settings.S3_SECRET_KEY
+        endpoint_url = settings.S3_ENDPOINT_URL
+        # region = settings.S3_REGION # 区域
 
-        self.s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
+        # self.s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
+        #                        aws_secret_access_key=aws_secret_access_key,
+        #                        region_name=region,endpoint_url=endpoint_url)
+        self.s3_client = boto3.client('s3', aws_access_key_id=aws_access_key_id,
                                aws_secret_access_key=aws_secret_access_key,
-                               region_name=region,endpoint_url=endpoint_url)
-        self.BUCKET_NAME = bucket_name
+                               endpoint_url=endpoint_url)
+
+        self.bucket_name = bucket_name
 
     def upload_files(self, path_local, path_s3):
         """
@@ -35,9 +38,40 @@ class S3_upload():
         """
         try:
             with open(src_local_path, 'rb') as f:
-                self.s3.upload_fileobj(f, self.BUCKET_NAME, dest_s3_path)
+                self.s3_client.upload_fileobj(f, self.bucket_name, dest_s3_path)
         except Exception as e:
             logger.info(f'Upload data failed. | src: {src_local_path} | dest: {dest_s3_path} | Exception: {e}')
             return False
         logger.info(f'Uploading file successful. | src: {src_local_path} | dest: {dest_s3_path}')
         return True
+
+    def get_filelist(self, path, filename):
+        """
+        Gets the object.
+
+        :return: The object data in bytes.
+        """
+        try:
+            save_path = os.path.join(settings.MEDIA_ROOT, path)
+
+            objects = self.s3_client.list_objects_v2(Bucket=self.bucket_name)
+
+            for obj in objects['Contents']:
+                print(obj['Key'])
+
+            logger.info(
+                "Got object %s from bucket %s.",
+                save_path,
+                self.bucket_name,
+            )
+        except Exception as e:
+            print(
+                "Couldn't get object %s from bucket %s. Exception: %s" %
+                ( path,
+                self.bucket_name,
+                e)
+            )
+            return False
+
+
+

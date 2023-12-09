@@ -1,7 +1,7 @@
 from typing import List
 import json
 
-class Elements(object):
+class Element(object):
     def __init__(self, label_id: int=None, type: str=None, frame: str=None, group: int=None, source: str=None, occluded: bool=None, outside: bool=None,
                  z_order: int=None, rotation: float=None, points: List=None, attributes: List=None):
         self.label_id = label_id
@@ -17,9 +17,9 @@ class Elements(object):
         self.attributes = attributes
 
 class Shapes(object):
-    def __init__(self,  elements: List[Elements]=None, label_id: int=None, type: str=None, frame: str=None, group: int=None, source: str=None, occluded: bool=None, outside: bool=None,
+    def __init__(self,  elements: List[Element], label_id: int=None, type: str=None, frame: str=None, group: int=None, source: str=None, occluded: bool=None, outside: bool=None,
                  z_order: int=None, rotation: float=None, points: List=None, attributes: List=None):
-        Elements.__init__(self, label_id, type, frame, group, source, occluded, outside,
+        Element.__init__(self, label_id, type, frame, group, source, occluded, outside,
                  z_order, rotation, points, attributes)
         self.elements = elements
 
@@ -33,7 +33,9 @@ class Annotations(object):
 
 if __name__ == "__main__":
 
-    e = Elements()
+    l = []
+
+    e = Element()
     e.label_id = 2
     e.type="skeleton"
     e.frame=0
@@ -43,11 +45,30 @@ if __name__ == "__main__":
     e.outside=False
     e.z_order=0
     e.rotation=float(0)
-    e.points=[]
+    e.points=[252.0815176461926,
+              61.27675985730022]
     e.attributes=[]
 
+    l.append(e)
+
+    b = Element()
+    b.label_id = 2
+    b.type="skeleton"
+    b.frame=0
+    b.group=0
+    b.source="manual"
+    b.occluded=False
+    b.outside=False
+    b.z_order=0
+    b.rotation=float(0)
+    bpoints=[252.0815176461926,
+              61.27675985730022]
+    b.attributes=[]
+
+    l.append(b)
+
     s = Shapes()
-    s.elements = [e]
+    s.elements = l
     s.label_id = 1
     s.type="skeleton"
     s.frame=0

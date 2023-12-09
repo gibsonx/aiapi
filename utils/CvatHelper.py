@@ -1,14 +1,19 @@
 from typing import List
 import json
 import urllib.request
-from typing import List
 from urllib.error import HTTPError
-
+import os, django
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "aiapi.settings")
+django.setup()
+from django.conf import settings
 import numpy as np
 from PIL import Image
-from CvatEntity import *
+from utils.CvatEntity import *
 from keras.models import load_model
-
+import logging
+logger = logging.getLogger('mylogger')
+from utils.ImageProcesser import ImageProcesser
+from utils.Oss2 import Oss2
 def post(url, params, token=None):
     headers = {
         'Content-Type': 'application/json',
@@ -39,7 +44,6 @@ def post(url, params, token=None):
             # We are printing the result
             # We must decode it because response.read() returns a bytes string
             return (json.loads(response.read().decode('utf-8')))
-
 
 def put(url, params, token=None):
     headers = {
@@ -104,80 +108,133 @@ def get(url, token=None):
             return (json.loads(response.read().decode('utf-8')))
 
 
-def create_kps_json_payload(kps: List, labels: List) -> json:
-
-    elements_list = []
-
-    for z in zip(kps,labels):
-        sublabel = Elements()
-        sublabel.label_id = z[1]
-        sublabel.type = "points"
-        sublabel.frame = 0
-        sublabel.group = 0
-        sublabel.source = "manual"
-        sublabel.occluded = False
-        sublabel.outside = False
-        sublabel.z_order = 0
-        sublabel.rotation = float(0)
-        sublabel.points = z[0]
-        sublabel.attributes = []
-        elements_list.append(sublabel)
-
-    s = Shapes()
-    s.elements = elements_list
-    s.label_id = 1
-    s.type = "skeleton"
-    s.frame = 0
-    s.group = 0
-    s.source = "manual"
-    s.occluded = False
-    s.outside = False
-    s.z_order = 0
-    s.rotation = float(0)
-    s.points = []
-    s.attributes = []
-
-    a = Annotations(shapes=[s])
-
-    json_data = json.dumps(a, default=lambda o: o.__dict__, indent=4)
-
-    return json_data
+# def kps_inference(image_path):
+#
+#     model = load_model('C:\/Users\/Administrator\/Downloads\/pelvis.h5')
+#
+#     open_cv_image = np.stack([np.array(Image.open(image_path))])
+#
+#     kps = model.predict(open_cv_image)
+#
+#     row = kps.tolist()[0]
+#
+#     converted_keypoints = [list(a) for a in zip(*[iter(row)] * 2)]
+#
+#     return converted_keypoints
 
 
-def kps_inference(image_path):
+class CvatJobHelper:
+    def __init__(self, jobid):
+        self.username = settings.CVAT_USERNAME
+        self.password = settings.CVAT_PASSWORD
+        self.base_url = settings.CVAT_URL
+        self.cvat_local_folder =  settings.CVAT_IMG_FOLDER_PREFIX
+        self.jobid = jobid
+        self.token = self.get_token()
 
-    model = load_model('C:\/Users\/Administrator\/Downloads\/pelvis.h5')
+    def get_token(self):
+        auth = {
+            "username": self.username,
+            "password": self.password
+        }
+        auth_url = self.base_url + '/api/auth/login'
+        token = post(auth_url, json.dumps(auth))['key']
+        return token
 
-    open_cv_image = np.stack([np.array(Image.open(image_path))])
+    def get_jobImgOssPath(self):
+        job_url = self.base_url + "/api/jobs/%d/data/meta?scheme=json" % self.jobid
+        payload = get(job_url, self.token)
+        img_path = payload['frames'][0]['name'].removeprefix(self.cvat_local_folder)
+        return img_path
 
-    kps = model.predict(open_cv_image)
+    def get_job_image(self):
+        image_obj_path = self.get_jobImgOssPath()
+        image_name = image_obj_path.split('/')[-1]
 
-    row = kps.tolist()[0]
+        target_folder, target_folder_relative = ImageProcesser.create_image_folder(dest_father_dir='images')
 
-    converted_keypoints = [list(a) for a in zip(*[iter(row)] * 2)]
+        target_image = os.path.join(target_folder, image_name)
+        target_image_relative = os.path.join(target_folder_relative, image_name)
 
-    return converted_keypoints
+        oss = Oss2()
+        oss.get_single_file(image_obj_path, target_image)
+
+        return target_image, target_image_relative
+
+    def create_kps_json_payload(self,kps: List) -> json:
+        label_url = self.base_url + "/api/labels?job_id=%d" % self.jobid
+        label_resp = get(label_url, self.token)
+        sublabels = label_resp['results'][0]['sublabels']
+        Ids = [ label['id'] for label in sublabels ]
+
+        elements_list = []
+
+        for z in zip(kps, Ids):
+            b = Element()
+            b.label_id = z[1]
+            b.type = "points"
+            b.frame = 0
+            b.group = 0
+            b.source = "manual"
+            b.occluded = False
+            b.outside = False
+            b.z_order = 0
+            b.rotation = float(0)
+            b.points = z[0]
+            b.attributes = []
+            elements_list.append(b)
+
+        s = Shapes(elements=elements_list)
+        s.label_id = label_resp['results'][0]['id']
+        s.type = "skeleton"
+        s.frame = 0
+        s.group = 0
+        s.source = "manual"
+        s.occluded = False
+        s.outside = False
+        s.z_order = 0
+        s.rotation = float(0)
+        s.points = []
+        s.attributes = []
+        a = Annotations(shapes=[s])
+        json_data = json.dumps(a, default=lambda o: o.__dict__, indent=4)
+        return json_data
+    def post_anno(self, kps):
+        json_data = self.create_kps_json_payload(kps)
+        anno_url = self.base_url + "/api/jobs/%s/annotations" % self.jobid
+        resp = put(anno_url, json_data, self.token)
+        print(resp)
+
 
 if __name__ == "__main__":
-    auth = {
-        "username": "admin",
-        "password": "9na6JucPkzP9"
-    }
+    job = CvatJobHelper(208)
+    target_image, target_image_relative = job.get_job_image()
 
-    auth_url = 'http://8.217.95.207:8080/api/auth/login'
-    token = post(auth_url, json.dumps(auth))['key']
+    annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessAP10'])
 
-    label_url = 'http://8.217.95.207:8080/api/labels?job_id=47'
-    label_resp = get(label_url, token)
+    imgoi_array, kpsoi = annotated_image.kps_predict()
+    kps = annotated_image.kpstuple_to_couplelist(kpsoi)
+    print(job.post_anno(kps))
 
-    sublabels = label_resp['results'][0]['sublabels']
-
-    Ids = [ label['id'] for label in sublabels ]
-
-    json_data = create_kps_json_payload(kps_inference('2023101401.jpg'),Ids)
-
-    print(json_data)
-
-    anno_url = 'http://8.217.95.207:8080/api/jobs/47/annotations'
-    resp = put(anno_url, json_data, token)
-    print(resp)
+    # auth = {
+    #     "username": "admin",
+    #     "password": "9na6JucPkzP9"
+    # }
+    #
+    # auth_url = 'http://8.217.95.207:8080/api/auth/login'
+    # token = post(auth_url, json.dumps(auth))['key']
+    #
+    # label_url = 'http://8.217.95.207:8080/api/labels?job_id=47'
+    # label_resp = get(label_url, token)
+    #
+    # sublabels = label_resp['results'][0]['sublabels']
+    #
+    # Ids = [ label['id'] for label in sublabels ]
+    #
+    # json_data = create_kps_json_payload(kps_inference('2023101401.jpg'),Ids)
+    #
+    # print(json_data)
+    #
+    # anno_url = 'http://8.217.95.207:8080/api/jobs/47/annotations'
+    # resp = put(anno_url, json_data, token)
+    # print(resp)

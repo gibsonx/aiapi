@@ -13,7 +13,6 @@ import numpy.typing as Numpy
 import os
 import datetime
 from utils.Predictor import Predictor
-
 class ImageProcesser:
 
     def __init__(self, image_path: str, model_args: Dict):
@@ -41,12 +40,11 @@ class ImageProcesser:
 
         p = Predictor(self.model_path, image_predict)
 
-        if self.model_name == "densenet":
-            kps_predict = p.DenseNet
-        else:
-            kps_predict = p.Yolo8
+        kps_predict = getattr(p, self.model_name)
 
         kps_predict_tuple = self.kpslist_to_tuple(kps_predict)
+        print(kps_predict_tuple)
+
         imgoi_array, kpsoi = self.convert_to_original(image_predict, kps_predict_tuple)
 
         return  imgoi_array, kpsoi
@@ -58,7 +56,8 @@ class ImageProcesser:
         imgoi, kpsoi = seq(image=tran_img_array, keypoints=tran_kps)
         return imgoi, kpsoi
 
-    def create_image_folder(self,dest_father_dir):
+    @staticmethod
+    def create_image_folder(dest_father_dir):
         # 创建存储路径
         img_dir1 = os.path.join(settings.MEDIA_ROOT, dest_father_dir)
         if not os.path.exists(img_dir1):
@@ -80,7 +79,7 @@ class ImageProcesser:
 
     def save_tran_image(self) -> str:
         imgoi_array, kpsoi = self.kps_predict()
-        print(kpsoi)
+
         kps_original = KeypointsOnImage(kpsoi, shape=self.open_cv_image.shape)
         image_with_kps = kps_original.draw_on_image(self.open_cv_image, size=15)
 
@@ -95,15 +94,25 @@ class ImageProcesser:
 
         return db_path
 
-    def kpslist_to_tuple(self, kpsList: List[float]) -> List[Keypoint]:
+
+    @staticmethod
+    def kpslist_to_tuple(kpsList: List[float]) -> List[Keypoint]:
         converted_keypoints = [list(a) for a in zip(*[iter(kpsList)] * 2)]
         kps = [Keypoint(x=coodination[0], y=coodination[1]) for coodination in converted_keypoints]
         return kps
 
-    def kpstuple_to_list(self, kpsTupleList: List[Keypoint]) -> List:
+    @staticmethod
+    def kpstuple_to_list(kpsTupleList: List[Keypoint]) -> List:
         ts_kps_row = []
         for i in range(len(kpsTupleList)):
             ts_kps_row.extend([kpsTupleList[i].x, kpsTupleList[i].y])
+        return ts_kps_row
+
+    @staticmethod
+    def kpstuple_to_couplelist(kpsTupleList: List[Keypoint]) -> List:
+        ts_kps_row = []
+        for i in range(len(kpsTupleList)):
+            ts_kps_row.append([float(kpsTupleList[i].x), float(kpsTupleList[i].y)])
         return ts_kps_row
 
 

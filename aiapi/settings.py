@@ -16,16 +16,13 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-0pm-@32ln=-)q)o3l$47n1_e0l-t(%e2yhlj$s%%2*fi73-y4k'
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 ALLOWED_HOSTS = []
 
 
@@ -108,11 +105,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
@@ -127,8 +121,13 @@ MEDIA_URL = '/media/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+S3_SECRET_ID = 'LTAI5tMk3XXjea782mz5qFbM'
+S3_SECRET_KEY = 'YYPg0YcUgQgYChKYaUTREVPewmwE14'
+S3_ENDPOINT_URL = 'https://oss-cn-hongkong.aliyuncs.com'
+S3_BUCKET = 'aspine-ai'
 
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # 指定 Broker 使用 Redis，Broker 负责任务的分发和调度
 CELERY_BROKER_URL = 'redis://192.168.191.128:6379/0'
 # 指定结果存储 Backend 使用 Redis，Backend 负责存储任务执行结果
@@ -151,15 +150,30 @@ CELERYD_MAX_TASKS_PER_CHILD = 10
 CELERY_TASK_TIME_LIMIT = 20 * 1
 # # 过期时间,默认一天
 CELERY_RESULT_EXPIRES = 20 * 1
-# 任务限流
-# CELERY_TASK_ANNOTATIONS = {'tasks.add': {'rate_limit': '10/s'}}
-# 定时任务
-# CELERYBEAT_SCHEDULE = {
-#     'task1': {
-#         'task': 'upload-task',  # 指定任务名称
-#         'schedule': timedelta(seconds=5),  # 任务执行时间，每5秒执行一次
-#         'options': {
-#             'queue': 'beat_tasks' # 指定队列
-#         }
-#     }
-# }
+
+CVAT_URL = 'http://8.217.95.207:8080'
+CVAT_USERNAME = 'admin'
+CVAT_PASSWORD = '9na6JucPkzP9'
+CVAT_IMG_FOLDER_PREFIX = 'ossfs/'
+
+MODEL_DICT = {
+    "Pivles": {
+        "model": "Pivles_Densenet121",
+        "img_height": 500,
+        "img_width" : 280,
+        "model_path" : "D:\/aspine\/densenet121.h5"
+    },
+    "SelfAssessAP10": {
+        "model": "SelfAssessAP10_Yolov8",
+        "img_height": 500,
+        "img_width" : 280,
+        "model_path": "D:\/aspine\/yolov8x-pose-p6.pt"
+    },
+    "SelfAssessLT5": {
+        "model": "SelfAssessLT5_Yolov8",
+        "img_height": 500,
+        "img_width": 280,
+        "model_path": "D:\/aspine\/yolov8x-pose-p6.pt"
+    }
+}
+
