@@ -141,10 +141,16 @@ class CvatJobHelper:
         token = post(auth_url, json.dumps(auth))['key']
         return token
 
+    def removeprefix(self, text, prefix):
+        if text.startswith(prefix):
+            return text[len(prefix):]
+        else:
+            return text
+
     def get_jobImgOssPath(self):
         job_url = self.base_url + "/api/jobs/%d/data/meta?scheme=json" % self.jobid
         payload = get(job_url, self.token)
-        img_path = payload['frames'][0]['name'].removeprefix(self.cvat_local_folder)
+        img_path = self.removeprefix(payload['frames'][0]['name'],self.cvat_local_folder)
         return img_path
 
     def get_job_image(self):

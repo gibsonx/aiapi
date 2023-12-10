@@ -3,6 +3,7 @@ from celery.schedules import crontab
 import time
 import os
 from celery import Celery
+from django.conf import settings
 from celery import shared_task
 # 设置django环境变量
 from aiapi.celery_factory import app
