@@ -31,11 +31,11 @@ def send_annotation(DiagId: int) -> Tuple[bool, str]:
     target_image, target_image_relative = job.get_job_image()
 
     # Depending on the diagnosis type of the Diagnosis object, create an ImageProcesser instance with the appropriate model arguments
-    if obj.type == "1":
+    if obj.type == 1:
         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessAP10'])
-    elif obj.type == "2":
+    elif obj.type == 2:
         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessLT5'])
-    elif obj.type == "3":
+    elif obj.type == 3:
         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['Pivles'])
     else:
         return False, "failed"
@@ -49,7 +49,7 @@ def send_annotation(DiagId: int) -> Tuple[bool, str]:
     # If the saving is successful, update the Diagnosis object with the relative path of the target image and the path of the annotated image
     if anno_path:
         obj.img=target_image_relative
-        obj.anno_img = annotated_image.save_tran_image()
+        obj.anno_img = anno_path
         try:
             obj.save()
             return True, "success"
