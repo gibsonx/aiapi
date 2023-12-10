@@ -13,7 +13,7 @@ from diagnosis.models import Diagnosis
 from utils.CvatHelper import CvatJobHelper
 from utils.ImageProcesser import ImageProcesser
 @shared_task()
-def send_annotation(jobId: int, type: str) -> Tuple[bool, str]:
+def send_annotation(DiagId: int) -> Tuple[bool, str]:
     """
     This function is used to send annotations to CVAT and save the annotated image.
     If the process is successful, it returns True and the string "success".
@@ -25,7 +25,8 @@ def send_annotation(jobId: int, type: str) -> Tuple[bool, str]:
     """
 
     # Create a CvatJobHelper instance with the jobid from the Diagnosis object
-    job = CvatJobHelper(jobId)
+    obj = Diagnosis.objects.get(id=DiagId)
+    job = CvatJobHelper(obj.jobId)
     # Retrieve the target image and its relative path
     target_image, target_image_relative = job.get_job_image()
 
@@ -45,7 +46,6 @@ def send_annotation(jobId: int, type: str) -> Tuple[bool, str]:
     anno_path = annotated_image.save_tran_image()
     # If the saving is successful, update the Diagnosis object with the relative path of the target image and the path of the annotated image
     if anno_path:
-        obj = Diagnosis.objects.get(jobid=jobId)
         obj.img=target_image_relative
         obj.anno_img = annotated_image.save_tran_image()
         try:
