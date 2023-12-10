@@ -26,17 +26,19 @@ def send_annotation(DiagId: int) -> Tuple[bool, str]:
 
     # Create a CvatJobHelper instance with the jobid from the Diagnosis object
     obj = Diagnosis.objects.get(id=DiagId)
-    job = CvatJobHelper(obj.jobId)
+    job = CvatJobHelper(obj.jobid)
     # Retrieve the target image and its relative path
     target_image, target_image_relative = job.get_job_image()
 
     # Depending on the diagnosis type of the Diagnosis object, create an ImageProcesser instance with the appropriate model arguments
-    if type == "1":
+    if obj.type == "1":
         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessAP10'])
-    elif type == "2":
+    elif obj.type == "2":
         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessLT5'])
-    elif type== "3":
+    elif obj.type == "3":
         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['Pivles'])
+    else:
+        return False, "failed"
 
     # Predict keypoints on the image and convert them into a list of tuples
     imgoi_array, kpsoi = annotated_image.kps_predict()

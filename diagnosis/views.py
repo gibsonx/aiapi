@@ -117,7 +117,7 @@ def JobDiagnosisView(request):
             async_task = send_annotation.delay(DiagId=obj.id)
 
             if async_task.id:
-                messages.add_message(request, messages.INFO, "Job Id: {} 提交成功, 请去历史中等待查看".format(async_task.id))
+                messages.add_message(request, messages.INFO, "Job Id: {} 提交成功, 请去历史中等待查看".format(obj.id))
             return HttpResponseRedirect("/diag/jobsubmit/")
     else:
        form = JobDiagnosisForm()
