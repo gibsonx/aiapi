@@ -12,7 +12,7 @@ from diagnosis.models import Diagnosis
 from utils.CvatHelper import CvatJobHelper
 from utils.ImageProcesser import ImageProcesser
 @shared_task()
-def send_annotation(obj: Diagnosis) -> Tuple[bool, str]:
+def send_annotation(jobId: int, type: str) -> Tuple[bool, str]:
     """
     This function is used to send annotations to CVAT and save the annotated image.
     If the process is successful, it returns True and the string "success".
@@ -24,16 +24,16 @@ def send_annotation(obj: Diagnosis) -> Tuple[bool, str]:
     """
 
     # Create a CvatJobHelper instance with the jobid from the Diagnosis object
-    job = CvatJobHelper(obj.jobid)
+    job = CvatJobHelper(jobId)
     # Retrieve the target image and its relative path
     target_image, target_image_relative = job.get_job_image()
 
     # Depending on the diagnosis type of the Diagnosis object, create an ImageProcesser instance with the appropriate model arguments
-    if obj.type == "1":
+    if type == "1":
         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessAP10'])
-    elif obj.type == "2":
+    elif type == "2":
         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessLT5'])
-    elif obj.type== "3":
+    elif type== "3":
         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['Pivles'])
 
     # Predict keypoints on the image and convert them into a list of tuples
@@ -44,6 +44,7 @@ def send_annotation(obj: Diagnosis) -> Tuple[bool, str]:
     anno_path = annotated_image.save_tran_image()
     # If the saving is successful, update the Diagnosis object with the relative path of the target image and the path of the annotated image
     if anno_path:
+        obj = Diagnosis.objects.get(jobid=jobId)
         obj.img=target_image_relative
         obj.anno_img = annotated_image.save_tran_image()
         try:
