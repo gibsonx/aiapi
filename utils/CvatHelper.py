@@ -12,7 +12,7 @@ from utils.CvatEntity import *
 from keras.models import load_model
 import logging
 logger = logging.getLogger('mylogger')
-from utils.ImageProcesser import ImageProcesser
+from utils.ImageProcesser import ImageProcesser,create_image_folder
 from utils.Oss2 import Oss2
 def post(url, params, token=None):
     headers = {
@@ -157,7 +157,7 @@ class CvatJobHelper:
         image_obj_path = self.get_jobImgOssPath()
         image_name = image_obj_path.split('/')[-1]
 
-        target_folder, target_folder_relative = ImageProcesser.create_image_folder(dest_father_dir='images')
+        target_folder, target_folder_relative = create_image_folder(dest_father_dir='images')
 
         target_image = os.path.join(target_folder, image_name)
         target_image_relative = os.path.join(target_folder_relative, image_name)

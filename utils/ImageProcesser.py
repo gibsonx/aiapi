@@ -13,6 +13,29 @@ import numpy.typing as Numpy
 import os
 import datetime
 from utils.Predictor import Predictor
+
+def create_image_folder(dest_father_dir):
+    # 创建存储路径
+    img_dir1 = os.path.join(settings.MEDIA_ROOT, dest_father_dir)
+    print(img_dir1)
+    if not os.path.exists(img_dir1):
+        os.mkdir(img_dir1)
+    img_dir2 = os.path.join(img_dir1, datetime.datetime.now().strftime("%Y"))
+    if not os.path.exists(img_dir2):
+        os.mkdir(img_dir2)
+    img_dir3 = os.path.join(img_dir2, datetime.datetime.now().strftime("%m"))
+    if not os.path.exists(img_dir3):
+        os.mkdir(img_dir3)
+    target_dir = os.path.join(img_dir3, datetime.datetime.now().strftime("%d"))
+
+    if not os.path.exists(target_dir):
+        os.mkdir(target_dir)
+
+    target_dir_relative_path = os.path.relpath(target_dir, settings.MEDIA_ROOT)
+    print("target_dir: {} , relative_dir: {} ".format(target_dir, target_dir_relative_path))
+
+    return target_dir, target_dir_relative_path
+
 class ImageProcesser:
 
     def __init__(self, image_path: str, model_args: Dict):
@@ -56,37 +79,13 @@ class ImageProcesser:
         print("original keypoints: ",kpsoi)
         return imgoi, kpsoi
 
-    @staticmethod
-    def create_image_folder(dest_father_dir):
-        # 创建存储路径
-        img_dir1 = os.path.join(settings.MEDIA_ROOT, dest_father_dir)
-        print("root dir",img_dir1)
-
-        if not os.path.exists(img_dir1):
-            os.mkdir(img_dir1)
-        img_dir2 = os.path.join(img_dir1, datetime.datetime.now().strftime("%Y"))
-        if not os.path.exists(img_dir2):
-            os.mkdir(img_dir2)
-        img_dir3 = os.path.join(img_dir2, datetime.datetime.now().strftime("%m"))
-        if not os.path.exists(img_dir3):
-            os.mkdir(img_dir3)
-        target_dir = os.path.join(img_dir3, datetime.datetime.now().strftime("%d"))
-
-        if not os.path.exists(target_dir):
-            os.mkdir(target_dir)
-
-        target_dir_relative_path = os.path.relpath(target_dir, settings.MEDIA_ROOT)
-        print( "target_dir: {} , relative_dir: {} ".format(target_dir, target_dir_relative_path))
-
-        return target_dir, target_dir_relative_path
-
     def save_tran_image(self) -> str:
         imgoi_array, kpsoi = self.kps_predict()
 
         kps_original = KeypointsOnImage(kpsoi, shape=self.open_cv_image.shape)
         image_with_kps = kps_original.draw_on_image(self.open_cv_image, size=15)
 
-        target_folder, target_folder_relative = self.create_image_folder(dest_father_dir='anno_images')
+        target_folder, target_folder_relative = create_image_folder(dest_father_dir='anno_images')
         target_image = os.path.join(target_folder, self.image_name)
         print(target_image)
         #save image with absolute path
