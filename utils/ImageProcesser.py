@@ -85,7 +85,7 @@ class ImageProcesser:
         kps_original = KeypointsOnImage(kpsoi, shape=self.open_cv_image.shape)
         image_with_kps = kps_original.draw_on_image(self.open_cv_image, size=15)
 
-        folder, folder_relative = create_image_folder(dest_father_dir='anno_images')
+        folder, folder_relative = create_image_folder('anno_images')
         target_image = os.path.join(folder, self.image_name)
         print("target Image {} ".format(target_image))
         #save image with absolute path
