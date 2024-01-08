@@ -92,7 +92,7 @@ class ImageProcesser:
         plt.imsave(target_image, image_with_kps)
 
         #return image relative path to save in DB
-        db_path = os.path.join(target_folder_relative, self.image_name)
+        db_path = os.path.join(folder_relative, self.image_name)
 
         return db_path
 
