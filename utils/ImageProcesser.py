@@ -74,6 +74,7 @@ class ImageProcesser:
             os.mkdir(target_dir)
 
         target_dir_relative_path = os.path.relpath(target_dir, settings.MEDIA_ROOT)
+        print( "target_dir: {} , relative_dir: {} ".format(target_dir, target_dir_relative_path))
 
         return target_dir, target_dir_relative_path
 
