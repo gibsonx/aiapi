@@ -17,7 +17,7 @@ from utils.Predictor import Predictor
 def create_image_folder(dest_father_dir):
     # 创建存储路径
     img_dir1 = os.path.join(settings.MEDIA_ROOT, dest_father_dir)
-    print(img_dir1)
+    print(dest_father_dir)
     if not os.path.exists(img_dir1):
         os.mkdir(img_dir1)
     img_dir2 = os.path.join(img_dir1, datetime.datetime.now().strftime("%Y"))
