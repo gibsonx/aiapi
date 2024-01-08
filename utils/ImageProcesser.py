@@ -87,7 +87,7 @@ class ImageProcesser:
 
         target_folder, target_folder_relative = create_image_folder(dest_father_dir='anno_images')
         target_image = os.path.join(target_folder, self.image_name)
-        print(target_image)
+        print("target Image",target_image)
         #save image with absolute path
         plt.imsave(target_image, image_with_kps)
 

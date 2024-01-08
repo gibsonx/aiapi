@@ -48,6 +48,8 @@ def send_annotation(DiagId: int, push: bool) -> Tuple[bool, str]:
         print("mark annotations on cvat with payload", job.post_anno(kps))
 
     anno_path = annotated_image.save_tran_image()
+    print(anno_path)
+
     # If the saving is successful, update the Diagnosis object with the relative path of the target image and the path of the annotated image
     if anno_path:
         obj.img=target_image_relative
