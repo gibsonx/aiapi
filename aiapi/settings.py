@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'bootstrap5',
     'diagnosis',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -151,6 +152,14 @@ CELERY_TASK_TIME_LIMIT = 20 * 1
 # # 过期时间,默认一天
 CELERY_RESULT_EXPIRES = 20 * 1
 
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100
+}
+
+
+
 CVAT_URL = 'http://8.217.95.207:8080'
 CVAT_USERNAME = 'admin'
 CVAT_PASSWORD = '9na6JucPkzP9'
@@ -163,8 +172,8 @@ MODEL_DICT = {
         "img_width" : 280,
         "model_path" : "D:\/aspine\/densenet121.h5"
     },
-    "SelfAssessAP10": {
-        "model": "SelfAssessAP10_Yolov8",
+    "SelfAssessAP11": {
+        "model": "SelfAssessAP11_Yolov8",
         "img_height": 500,
         "img_width" : 280,
         "model_path": "D:\/aspine\/yolov8x-pose-p6.pt"

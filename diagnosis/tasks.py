@@ -13,7 +13,7 @@ from diagnosis.models import Diagnosis
 from utils.CvatHelper import CvatJobHelper
 from utils.ImageProcesser import ImageProcesser
 @shared_task()
-def send_annotation(DiagId: int) -> Tuple[bool, str]:
+def send_annotation(DiagId: int, push: bool) -> Tuple[bool, str]:
     """
     This function is used to send annotations to CVAT and save the annotated image.
     If the process is successful, it returns True and the string "success".
@@ -32,7 +32,7 @@ def send_annotation(DiagId: int) -> Tuple[bool, str]:
 
     # Depending on the diagnosis type of the Diagnosis object, create an ImageProcesser instance with the appropriate model arguments
     if obj.type == 1:
-        annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessAP10'])
+        annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessAP11'])
     elif obj.type == 2:
         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessLT5'])
     elif obj.type == 3:
@@ -44,7 +44,9 @@ def send_annotation(DiagId: int) -> Tuple[bool, str]:
     imgoi_array, kpsoi = annotated_image.kps_predict()
     kps = annotated_image.kpstuple_to_couplelist(kpsoi)
 
-    print("mark annotations on cvat with payload", job.post_anno(kps))
+    if push:
+        print("mark annotations on cvat with payload", job.post_anno(kps))
+
     anno_path = annotated_image.save_tran_image()
     # If the saving is successful, update the Diagnosis object with the relative path of the target image and the path of the annotated image
     if anno_path:

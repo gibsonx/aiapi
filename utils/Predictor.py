@@ -30,20 +30,19 @@ class Predictor:
         return kps_predict
 
     @property
-    def SelfAssessAP10_Yolov8(self) -> List[float]:
+    def SelfAssessAP11_Yolov8(self) -> List[float]:
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         model = YOLO(self.model_path)
         model.to(device)
         results = model(self.image, conf=0.7)
 
         bboxes_keypoints = results[0].keypoints.data.cpu().numpy().tolist()
-
-        print(bboxes_keypoints)
-        indices_to_access = [2,1,6,5,12,11,14,13,16,15]
+        indices_to_access = [2,1,0,6,5,12,11,14,13,16,15]
         kps_predict = []
-        for kp in bboxes_keypoints:
-            for idx,el in enumerate(kp):
-                if idx in indices_to_access:
+        for kp in indices_to_access:
+            print(kp)
+            for idx,el in enumerate(bboxes_keypoints[0]):
+                if idx == kp:
                     kps_predict.extend(el[0:2])
         return kps_predict
 
@@ -59,8 +58,9 @@ class Predictor:
         print(bboxes_keypoints)
         indices_to_access = [4,6,12,14,16]
         kps_predict = []
-        for kp in bboxes_keypoints:
-            for idx,el in enumerate(kp):
-                if idx in indices_to_access:
+        for kp in indices_to_access:
+            print(kp)
+            for idx,el in enumerate(bboxes_keypoints[0]):
+                if idx == kp:
                     kps_predict.extend(el[0:2])
         return kps_predict

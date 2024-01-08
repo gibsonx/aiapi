@@ -28,20 +28,29 @@ def DiagnosisView(request):
                 img=img,
                 type=diag_type
             )
-            print("current diag nose type is %s " % diag_type)
-            if diag_type == "1":
-                annotated_image = ImageProcesser(image_path=obj.img.path, model_args=settings.MODEL_DICT['SelfAssessAP10'])
-            elif diag_type == "2":
+            # print("current diagnose type is %s " % diag_type)
+            print("current image path is", obj.img.path)
+            print(type(obj.type))
+            if int(obj.type) == 1:
+                annotated_image = ImageProcesser(image_path=obj.img.path,
+                                                 model_args=settings.MODEL_DICT['SelfAssessAP11'])
+            elif int(obj.type) == 2:
+                annotated_image = ImageProcesser(image_path=obj.img.path,
+                                                 model_args=settings.MODEL_DICT['SelfAssessLT5'])
+            elif int(obj.type) == 3:
                 annotated_image = ImageProcesser(image_path=obj.img.path, model_args=settings.MODEL_DICT['Pivles'])
-            anno_path = annotated_image.save_tran_image()
+            else:
+                return False, "failed"
 
-            if anno_path:
+            if annotated_image:
                 try:
-
                     obj.anno_img = annotated_image.save_tran_image()
                     obj.save()
                 except Exception as e:
                     print(e)
+
+            anno_path = annotated_image.save_tran_image()
+            print(anno_path)
 
             messages.add_message(request, messages.INFO, "Job Id: {} 提交成功, 请去历史中等待查看".format(obj.id))
             return HttpResponseRedirect("/diag/")
@@ -52,49 +61,52 @@ def DiagnosisView(request):
     return render(request, template_name, context)
 
 
-def send_annotation(DiagId: int) -> Tuple[bool, str]:
-    """
-    This function is used to send annotations to CVAT and save the annotated image.
-    If the process is successful, it returns True and the string "success".
-    Otherwise, if an exception occurs, it prints the exception and returns False and the exception.
-    1. query image path on CVAT per job and download the image to local for prediction with CvatJobHelper
-    2. choose model according to diagnosis type Id and inference keypoionts in form of list[Keypoint]
-    3. save annotated image local and path in DB for web display.
-    4. use CvatJobHelper again to post predicted keypoints onto the CVAT
-    """
-
-    # Create a CvatJobHelper instance with the jobid from the Diagnosis object
-    obj = Diagnosis.objects.get(id=DiagId)
-    job = CvatJobHelper(obj.jobid)
-    # Retrieve the target image and its relative path
-    target_image, target_image_relative = job.get_job_image()
-
-    # Depending on the diagnosis type of the Diagnosis object, create an ImageProcesser instance with the appropriate model arguments
-    if obj.type == 1:
-        annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessAP10'])
-    elif obj.type == 2:
-        annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessLT5'])
-    elif obj.type == 3:
-        annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['Pivles'])
-    else:
-        return False, "failed"
-
-    # Predict keypoints on the image and convert them into a list of tuples
-    imgoi_array, kpsoi = annotated_image.kps_predict()
-    kps = annotated_image.kpstuple_to_couplelist(kpsoi)
-
-    print("mark annotations on cvat with payload", job.post_anno(kps))
-    anno_path = annotated_image.save_tran_image()
-    # If the saving is successful, update the Diagnosis object with the relative path of the target image and the path of the annotated image
-    if anno_path:
-        obj.img=target_image_relative
-        obj.anno_img = anno_path
-        try:
-            obj.save()
-            return True, "success"
-        except Exception as e:
-            print(e)
-            return False, e
+# def send_annotation(DiagId: int) -> Tuple[bool, str]:
+#     """
+#     This function is used to send annotations to CVAT and save the annotated image.
+#     If the process is successful, it returns True and the string "success".
+#     Otherwise, if an exception occurs, it prints the exception and returns False and the exception.
+#     1. query image path on CVAT per job and download the image to local for prediction with CvatJobHelper
+#     2. choose model according to diagnosis type Id and inference keypoionts in form of list[Keypoint]
+#     3. save annotated image local and path in DB for web display.
+#     4. use CvatJobHelper again to post predicted keypoints onto the CVAT
+#     """
+#
+#     # Create a CvatJobHelper instance with the jobid from the Diagnosis object
+#     obj = Diagnosis.objects.get(id=DiagId)
+#     job = CvatJobHelper(obj.jobid)
+#     # Retrieve the target image and its relative path
+#     target_image, target_image_relative = job.get_job_image()
+#
+#     # Depending on the diagnosis type of the Diagnosis object, create an ImageProcesser instance with the appropriate model arguments
+#     if int(obj.type) == 1:
+#         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessAP11'])
+#     elif int(obj.type) == 2:
+#         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessLT5'])
+#     elif int(obj.type) == 3:
+#         annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['Pivles'])
+#     else:
+#         return False, "failed"
+#
+#     # Predict keypoints on the image and convert them into a list of tuples
+#     imgoi_array, kpsoi = annotated_image.kps_predict()
+#     kps = annotated_image.kpstuple_to_couplelist(kpsoi)
+#
+#     print("mark annotations on cvat with payload", job.post_anno(kps))
+#     anno_path = annotated_image.save_tran_image()
+#
+#
+#     # If the saving is successful, update the Diagnosis object with the relative path of the target image and the path of the annotated image
+#     if anno_path:
+#         print(anno_path,target_image_relative)
+#         obj.img=target_image_relative
+#         obj.anno_img = anno_path
+#         try:
+#             obj.save()
+#             return True, "success"
+#         except Exception as e:
+#             print(e)
+#             return False, e
 
 
 def JobDiagnosisView(request):
@@ -114,7 +126,7 @@ def JobDiagnosisView(request):
             )
 
             # synchronous execution
-            status, async_task = send_annotation(DiagId=obj.id)
+            status, async_task = send_annotation(DiagId=obj.id, push=True)
 
             # asynchronous exeuction
             # async_task = send_annotation.delay(DiagId=obj.id)

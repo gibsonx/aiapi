@@ -207,16 +207,17 @@ class CvatJobHelper:
         return json_data
     def post_anno(self, kps):
         json_data = self.create_kps_json_payload(kps)
+        print(json_data)
+
         anno_url = self.base_url + "/api/jobs/%s/annotations" % self.jobid
         resp = put(anno_url, json_data, self.token)
-        print(resp)
 
 
 if __name__ == "__main__":
     job = CvatJobHelper(208)
     target_image, target_image_relative = job.get_job_image()
 
-    annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessAP10'])
+    annotated_image = ImageProcesser(image_path=target_image, model_args=settings.MODEL_DICT['SelfAssessAP11'])
 
     imgoi_array, kpsoi = annotated_image.kps_predict()
     kps = annotated_image.kpstuple_to_couplelist(kpsoi)

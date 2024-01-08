@@ -23,10 +23,12 @@
                      {% for s in object_list %}
                       <tr>
                         <td>{{ s.id }}</td>
-                          {% if s.type == 1 %}
-                            <td>自我诊断</td>
-                          {% elif s.type == 2 %}
-                              <td>骨盆</td>
+                            {% if s.type == 1 %}
+                            <td>自我诊断AP11</td>
+                            {% elif s.type == 2 %}
+                              <td>自我诊断LT5</td>
+                            {% elif s.type == 3 %}
+                            <td>骨盆AP16</td>
                             {% endif %}
                          <td>
                           <button type="button" class="btn btn-primary" data-bs-toggle="modal"
